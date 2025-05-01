@@ -3,16 +3,25 @@
 # Exit on error
 set -e
 
+# Create app directory and log file
+mkdir -p /home/ubuntu/app
+LOG_FILE="/home/ubuntu/app/setup.log"
+
+# Function to log messages
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
 # Check for required environment variables
 if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ]; then
-    echo "❌ Required environment variables AWS_ACCOUNT_ID and AWS_REGION are not set"
+    log "❌ Required environment variables AWS_ACCOUNT_ID and AWS_REGION are not set"
     exit 1
 fi
 
-echo "🚀 Starting EC2 setup..."
+log "🚀 Starting EC2 setup..."
 
 # Install AWS CLI
-echo "📦 Installing AWS CLI..."
+log "📦 Installing AWS CLI..."
 apt-get update
 apt-get install -y unzip
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -20,7 +29,7 @@ unzip awscliv2.zip
 ./aws/install
 
 # Install Docker
-echo "📦 Installing Docker..."
+log "📦 Installing Docker..."
 apt-get update
 apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
@@ -32,43 +41,38 @@ systemctl start docker
 usermod -aG docker ubuntu
 
 # Install Docker Compose
-echo "📦 Installing Docker Compose..."
+log "📦 Installing Docker Compose..."
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-# Create app directory
-echo "📁 Creating app directory..."
-mkdir -p /home/ubuntu/app
-chown -R ubuntu:ubuntu /home/ubuntu/app
-
 # Get the current bucket name
-echo "🔍 Getting current bucket name..."
-BUCKET_NAME=$(aws s3 ls | grep "docker-pipeline-ml-ec2-lab-${ENVIRONMENT:-dev}" | awk '{print $3}')
+log "🔍 Getting current bucket name..."
+BUCKET_NAME=$(aws s3 ls | grep "^docker-pipeline-ml-ec2-lab" | awk '{print $3}')
 
 if [ -z "$BUCKET_NAME" ]; then
-    echo "❌ Could not find the S3 bucket"
+    log "❌ Could not find the S3 bucket"
     exit 1
 fi
 
 # Download files from S3
-echo "⬇️  Downloading files from S3..."
-aws s3 sync s3://${BUCKET_NAME}/ /home/ubuntu/app/
+log "⬇️  Downloading files from S3..."
+aws s3 sync s3://${BUCKET_NAME}/ /home/ubuntu/app/ 2>&1 | tee -a "$LOG_FILE"
 chown -R ubuntu:ubuntu /home/ubuntu/app
 
 # Login to ECR and start containers
-echo "🚀 Starting containers..."
+log "🚀 Starting containers..."
 su - ubuntu -c "
   aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
   cd /home/ubuntu/app
   docker-compose up -d
-"
+" 2>&1 | tee -a "$LOG_FILE"
 
 # Wait for Ollama container to be ready
-echo "⏳ Waiting for Ollama container to be ready..."
+log "⏳ Waiting for Ollama container to be ready..."
 sleep 10
 
 # Pull the model
-echo "📥 Pulling nomic-embed-text model..."
-docker exec ollama ollama pull nomic-embed-text
+log "📥 Pulling nomic-embed-text model..."
+docker exec ollama ollama pull nomic-embed-text 2>&1 | tee -a "$LOG_FILE"
 
-echo "✅ EC2 setup completed successfully!"
+log "✅ EC2 setup completed successfully!"

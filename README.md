@@ -1,131 +1,85 @@
-# PDF Text Analysis with ChromaDB
+# Docker Pipeline ML EC2 Lab
 
-This project processes PDF documents, extracts text, and performs semantic search using ChromaDB and Ollama embeddings.
+This project sets up a machine learning pipeline on AWS EC2 using Docker containers. It includes infrastructure as code (Terraform) to provision the necessary AWS resources and automated setup scripts.
+
+## Architecture
+
+- **Infrastructure**: AWS EC2 instance with Docker and Docker Compose
+- **Storage**: S3 bucket for file storage
+- **Security**: IAM roles and security groups for secure access
+- **Containers**: Docker containers for the ML pipeline components
+
+## Prerequisites
+
+- AWS CLI configured with appropriate credentials
+- Terraform installed
+- Docker installed (for local development)
+
+## Setup
+
+1. Configure AWS credentials:
+   ```bash
+   export AWS_ACCESS_KEY_ID="your_access_key"
+   export AWS_SECRET_ACCESS_KEY="your_secret_key"
+   export AWS_REGION="your_region"
+   export AWS_ACCOUNT_ID="your_account_id"
+   ```
+
+2. Deploy the infrastructure:
+   ```bash
+   cd infra
+   terraform init
+   terraform apply
+   ```
+
+3. After deployment, you can connect to the EC2 instance:
+   ```bash
+   # Download the private key from S3
+   aws s3 cp s3://<bucket-name>/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
+   chmod 400 key.pem
+
+   # Connect to the instance
+   ssh -i key.pem ubuntu@<ec2-public-ip>
+   ```
+
+4. Check the setup logs:
+   ```bash
+   cat /home/ubuntu/app/setup.log
+   ```
 
 ## Project Structure
 
 ```
 .
-├── data/                      # Directory for data files
-│   ├── input/                # Input PDF files
-│   ├── output/               # Processed data (JSONL files)
-│   │   └── delta_table/      # Date-based delta table
-│   └── answers/              # Query results
-├── src/                      # Source code
-│   ├── __init__.py
-│   ├── queries.py           # Predefined queries for testing
-│   ├── helpers.py           # Utility functions
-│   └── main.py              # Main script
-├── docker-compose.yml       # Docker Compose configuration
-├── Dockerfile               # Docker configuration
-├── pull_model.sh            # Script to pull Ollama model
-├── requirements.txt         # Python dependencies
-└── README.md                # This file
+├── infra/               # Terraform infrastructure code
+│   ├── ec2.tf          # EC2 instance configuration
+│   ├── iam.tf          # IAM roles and policies
+│   ├── s3.tf           # S3 bucket configuration
+│   └── vpc.tf          # VPC and networking setup
+├── scripts/            # Setup and utility scripts
+│   └── setup_ec2.sh    # EC2 instance setup script
+├── src/                # Application source code
+├── data/               # Data files
+├── docker-compose.yml  # Docker Compose configuration
+└── Dockerfile         # Docker image definition
 ```
 
-## Prerequisites
+## Monitoring and Logs
 
-- Docker
-- Docker Compose
-- Make (optional, for using Makefile commands)
+- Setup logs: `/home/ubuntu/app/setup.log`
+- Docker container logs: `docker logs <container-name>`
+- Application logs: Check the respective container logs
 
-## Getting Started
+## Cleanup
 
-1. Clone the repository:
+To destroy all resources:
+```bash
+cd infra
+terraform destroy
+```
 
-   ```bash
-   git clone git@github.com:efrigo88/docker-chromadb-lab.git
-   cd docker-chromadb-lab
-   ```
+## Notes
 
-2. Create a `.env` file in the project root. You can copy the contents from `.env.example` and modify as needed:
-
-   ```bash
-   # Spark configuration
-   THREADS="local[4]"
-   DRIVER_MEMORY="8g"
-   SHUFFLE_PARTITIONS="4"
-   COMPOSE_BAKE="true"
-   ```
-
-3. Build and start the containers:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-4. Pull the Ollama model:
-
-   ```bash
-   chmod +x pull_model.sh
-   ./pull_model.sh
-   ```
-
-   This script will:
-
-   - Start all containers
-   - Wait for Ollama service to be ready
-   - Pull the required model (nomic-embed-text)
-
-5. View logs:
-   ```bash
-   make logs
-   ```
-
-## Available Commands
-
-- `make up` - Start containers
-- `make down` - Stop containers
-- `make build` - Build containers
-- `make rebuild` - Rebuild and restart containers
-- `make logs` - View container logs
-- `make ps` - Check container status
-- `make clean` - Remove containers and volumes
-
-## Container Setup and Usage
-
-1. Start the containers:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-   This will build and start both the app and chroma containers in the background.
-
-2. Run your script in the app container:
-
-   ```bash
-   docker exec -it app python -m src.main
-   ```
-
-   The container will stay running, allowing you to:
-
-   - Modify code in the `src` directory
-   - Run the script multiple times
-   - See the output in your terminal
-
-3. To stop the containers when done (will delete the volume as well):
-   ```bash
-   docker compose down -v
-   ```
-
-## Usage
-
-1. Place your PDF in the project directory
-2. Update `FILE_PATH` in `src/main.py` if needed
-3. Run the script:
-   ```bash
-   docker exec -it app python -m src.main
-   ```
-
-## Troubleshooting
-
-If you encounter connection issues:
-
-1. Check if ChromaDB is running: `make ps`
-2. View logs: `make logs`
-3. Rebuild containers: `make rebuild`
-4. If Ollama model is not available, run the pull script again:
-   ```bash
-   ./pull_model.sh
-   ```
+- The EC2 instance may take a few minutes to fully initialize
+- All sensitive files (like SSH keys) are stored in S3
+- The setup script automatically installs Docker, Docker Compose, and other dependencies
