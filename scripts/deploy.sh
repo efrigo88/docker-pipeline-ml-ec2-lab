@@ -45,16 +45,21 @@ cd infra
 BUCKET_NAME=$(terraform output -raw bucket_name 2>/dev/null || echo "BUCKET_NAME_NOT_AVAILABLE")
 EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null || echo "EC2_IP_NOT_AVAILABLE")
 
+# Download and set up SSH key
+echo "🔑 Downloading SSH key..."
+cd ..
+aws s3 cp s3://${BUCKET_NAME}/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
+chmod 400 ./key.pem
+
 echo "✅ Deployment completed successfully!"
 echo ""
 echo "To connect to the EC2 instance:"
-echo "1. Download the SSH key:"
-echo "   aws s3 cp s3://${BUCKET_NAME}/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem"
+echo "1. Set environment variables:"
+echo "   export AWS_ACCOUNT_ID=\"140023373701\""
+echo "   export AWS_REGION=\"eu-west-1\""
+echo "   export ENVIRONMENT=\"dev\""
 echo ""
-echo "2. Set correct permissions on the key:"
-echo "   chmod 400 key.pem"
-echo ""
-echo "3. Connect to the EC2 instance:"
+echo "2. Connect to the instance:"
 echo "   ssh -i key.pem ubuntu@${EC2_IP}"
 echo ""
 echo "Note: The EC2 instance may take a few minutes to fully initialize."
