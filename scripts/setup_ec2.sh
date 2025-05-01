@@ -3,8 +3,7 @@
 # Exit on error
 set -e
 
-# Create app directory and log file
-mkdir -p /home/ubuntu/app
+# Define log file
 LOG_FILE="/home/ubuntu/app/setup.log"
 
 # Function to log messages
@@ -19,14 +18,6 @@ if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ]; then
 fi
 
 log "🚀 Starting EC2 setup..."
-
-# Install AWS CLI
-log "📦 Installing AWS CLI..."
-apt-get update
-apt-get install -y unzip
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-./aws/install
 
 # Install Docker
 log "📦 Installing Docker..."

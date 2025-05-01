@@ -78,9 +78,17 @@ resource "aws_instance" "data-pipeline-ec2" {
   user_data = <<-EOF
               #!/bin/bash
               
-              # Download and execute setup script
-              curl -o /tmp/setup_ec2.sh https://${local.bucket_name}.s3.${var.aws_region}.amazonaws.com/scripts/setup_ec2.sh
-              chmod +x /tmp/setup_ec2.sh
+              # Create app directory
+              mkdir -p /home/ubuntu/app
+              cd /home/ubuntu/app
+              
+              # Install AWS CLI
+              sudo apt update
+              sudo apt install awscli -y
+              
+              # Download and execute setup script using AWS CLI
+              aws s3 cp s3://${aws_s3_bucket.project_files.bucket}/scripts/setup_ec2.sh /home/ubuntu/app/setup_ec2.sh
+              chmod +x /home/ubuntu/app/setup_ec2.sh
               
               # Export variables for the setup script
               export AWS_ACCOUNT_ID="${var.aws_account_id}"
@@ -88,7 +96,7 @@ resource "aws_instance" "data-pipeline-ec2" {
               export ENVIRONMENT="${var.environment}"
               
               # Run setup script
-              /tmp/setup_ec2.sh
+              /home/ubuntu/app/setup_ec2.sh
               EOF
 
   tags = {

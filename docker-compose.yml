@@ -16,6 +16,8 @@ services:
         condition: service_started
     networks:
       - net
+    # keep container running, only for development
+    command: tail -f /dev/null
 
   chroma:
     # https://github.com/chroma-core/chroma/pkgs/container/chroma

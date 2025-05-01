@@ -53,6 +53,13 @@ resource "aws_iam_policy" "s3_access_policy" {
           aws_s3_bucket.project_files.arn,
           "${aws_s3_bucket.project_files.arn}/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListAllMyBuckets"
+        ]
+        Resource = "*"
       }
     ]
   })
