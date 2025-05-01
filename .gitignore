@@ -62,3 +62,5 @@ terraform.tfstate
 myplan
 
 .cursor/
+
+*.pem
