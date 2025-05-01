@@ -1,0 +1,50 @@
+services:
+  app:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/data-pipeline:latest
+    container_name: app
+    environment:
+      - THREADS=${THREADS}
+      - DRIVER_MEMORY=${DRIVER_MEMORY}
+      - SHUFFLE_PARTITIONS=${SHUFFLE_PARTITIONS}
+      - OLLAMA_HOST=ollama:11434
+    volumes:
+      - ./:/app/
+    depends_on:
+      chroma:
+        condition: service_started
+      ollama:
+        condition: service_started
+    networks:
+      - net
+
+  chroma:
+    # https://github.com/chroma-core/chroma/pkgs/container/chroma
+    image: ghcr.io/chroma-core/chroma:1.0.8.dev9
+    volumes:
+      - index_data:/chroma/.chroma/index
+    ports:
+      - 8000:8000
+    networks:
+      - net
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - net
+    restart: unless-stopped
+
+volumes:
+  index_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  net:
+    driver: bridge
