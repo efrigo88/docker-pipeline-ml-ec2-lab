@@ -29,13 +29,14 @@ BUCKET_NAME = (
     f"s3://docker-pipeline-ml-ec2-lab-{ENV}-"
     f"{datetime.now().strftime('%Y%m%d')}"
 )
+SPARK_BUCKET_NAME = BUCKET_NAME.replace("s3://", "s3a://")
 INPUT_PATH = f"{BUCKET_NAME}/data/input/sample2.pdf"
-OUTPUT_PATH = f"{BUCKET_NAME}/chromadb/delta_table"
-JSONL_PATH = f"{BUCKET_NAME}/chromadb/jsonl_file"
-ANSWERS_PATH = f"{BUCKET_NAME}/chromadb/answers.jsonl"
+OUTPUT_PATH = f"{SPARK_BUCKET_NAME}/data/output/delta_table"
+JSONL_PATH = f"{SPARK_BUCKET_NAME}/data/output/jsonl_file"
+ANSWERS_PATH = f"{SPARK_BUCKET_NAME}/data/answers/answers.jsonl"
 
 CHUNK_SIZE = 100
-OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_HOST = "http://ollama:11434"
 
 
 def process_document() -> Tuple[

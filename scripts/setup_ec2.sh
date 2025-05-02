@@ -55,7 +55,7 @@ log "🚀 Starting containers..."
 su - ubuntu -c "
   aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
   cd /home/ubuntu/app
-  docker-compose up -d
+  docker-compose up -d --build
 " 2>&1 | tee -a "$LOG_FILE"
 
 # Wait for Ollama container to be ready

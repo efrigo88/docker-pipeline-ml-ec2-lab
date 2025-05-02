@@ -56,16 +56,35 @@ spark = (
         "spark.sql.catalog.spark_catalog",
         "org.apache.spark.sql.delta.catalog.DeltaCatalog",
     )
-    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.2.0")
+    .config(
+        "spark.jars.packages",
+        "io.delta:delta-spark_2.12:3.2.0,"
+        "org.apache.hadoop:hadoop-aws:3.3.4,"
+        "com.amazonaws:aws-java-sdk-bundle:1.12.262",
+    )
+    .config(
+        "spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"
+    )
+    .config(
+        "spark.hadoop.fs.s3a.aws.credentials.provider",
+        "com.amazonaws.auth.DefaultAWSCredentialsProviderChain",
+    )
+    .config("spark.hadoop.fs.s3a.endpoint", "s3.amazonaws.com")
+    .config("spark.hadoop.fs.s3a.path.style.access", "false")
+    .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "true")
     .getOrCreate()
 )
 
 
 def get_s3_bucket_and_key(s3_path: str) -> tuple[str, str]:
     """Extract bucket name and key from S3 path."""
-    if not s3_path.startswith("s3://"):
-        raise ValueError("Path must be an S3 path starting with 's3://'")
-    path_without_prefix = s3_path[5:]  # Remove 's3://'
+    if not (s3_path.startswith("s3://") or s3_path.startswith("s3a://")):
+        raise ValueError(
+            "Path must be an S3 path starting with 's3://' or 's3a://'"
+        )
+    path_without_prefix = (
+        s3_path[5:] if s3_path.startswith("s3://") else s3_path[6:]
+    )
     bucket_name = path_without_prefix.split("/")[0]
     key = "/".join(path_without_prefix.split("/")[1:])
     return bucket_name, key
@@ -120,9 +139,17 @@ def parse_pdf(source_path: str) -> InputDocument:
     """Parse the PDF document using DocumentConverter."""
     converter = DocumentConverter()
     if source_path.startswith("s3://"):
-        # Read from S3
+        # Read from S3 and save to temporary file
         s3_file = read_from_s3(source_path)
-        result = converter.convert(s3_file)
+        temp_file = f"/tmp/{source_path.split('/')[-1]}"
+        with open(temp_file, "wb") as f:
+            f.write(s3_file.read())
+        try:
+            result = converter.convert(temp_file)
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
     else:
         # Read from local file
         result = converter.convert(source_path)
@@ -233,7 +260,7 @@ def save_json_data(
             f.write("\n")
 
     # If it's an S3 path, upload the file
-    if file_path.startswith("s3://"):
+    if file_path.startswith(("s3://", "s3a://")):
         write_to_s3(temp_file, file_path)
         # Clean up temporary file
         os.remove(temp_file)
