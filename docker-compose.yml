@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/data-pipeline:latest
+    image: 140023373701.dkr.ecr.eu-west-1.amazonaws.com/data-pipeline:latest
     container_name: app
     environment:
       - OLLAMA_HOST=ollama:11434

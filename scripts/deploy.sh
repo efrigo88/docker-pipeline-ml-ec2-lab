@@ -26,9 +26,18 @@ echo "🚀 Starting deployment process..."
 echo "Using AWS Region: ${AWS_REGION}"
 echo "Using AWS Account ID: ${AWS_ACCOUNT_ID}"
 
+# Get the bucket name and EC2 IP from Terraform outputs
+BUCKET_NAME=$(terraform output -raw bucket_name 2>/dev/null || echo "BUCKET_NAME_NOT_AVAILABLE")
+EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null || echo "EC2_IP_NOT_AVAILABLE")
+cd ..
+
+# Download and set up SSH key
+echo "🔑 Downloading SSH key..."
+aws s3 cp s3://${BUCKET_NAME}/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
+chmod 400 ./key.pem
+
 # Build Docker image
 echo "📦 Building Docker image..."
-cd ..
 docker buildx build --platform linux/amd64 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
 
 # Login to ECR
@@ -39,17 +48,6 @@ aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS 
 echo "🏷️  Tagging and pushing Docker image..."
 docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
-
-# Get the bucket name and EC2 IP from Terraform outputs
-cd infra
-BUCKET_NAME=$(terraform output -raw bucket_name 2>/dev/null || echo "BUCKET_NAME_NOT_AVAILABLE")
-EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null || echo "EC2_IP_NOT_AVAILABLE")
-
-# Download and set up SSH key
-echo "🔑 Downloading SSH key..."
-cd ..
-aws s3 cp s3://${BUCKET_NAME}/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
-chmod 400 ./key.pem
 
 echo "✅ Deployment completed successfully!"
 echo ""
