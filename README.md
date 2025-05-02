@@ -41,16 +41,12 @@ This project implements a machine learning pipeline for document processing and 
    # Edit the .env file with your AWS credentials
    AWS_ACCESS_KEY_ID=your_access_key
    AWS_SECRET_ACCESS_KEY=your_secret_key
-   AWS_REGION=your_region
-   AWS_ACCOUNT_ID=your_account_id
    ```
 
    The `.env` file should contain your AWS credentials in the following format:
    ```bash
    AWS_ACCESS_KEY_ID=your_access_key
    AWS_SECRET_ACCESS_KEY=your_secret_key
-   AWS_REGION=your_region
-   AWS_ACCOUNT_ID=your_account_id
    ```
 
    Make sure to replace the placeholder values with your actual AWS credentials. Never commit the `.env` file to version control.
