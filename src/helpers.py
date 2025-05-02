@@ -18,9 +18,9 @@ from langchain_ollama import OllamaEmbeddings
 s3_client = boto3.client("s3")
 
 # Spark configs
-THREADS = "local[8]"
-DRIVER_MEMORY = "16g"
-SHUFFLE_PARTITIONS = "8"
+THREADS = "local[4]"
+DRIVER_MEMORY = "8g"
+SHUFFLE_PARTITIONS = "4"
 
 # Define schema
 schema = T.StructType(
