@@ -1,6 +1,9 @@
 locals {
   # https://aws.amazon.com/ec2/instance-types/
+  # vCPUs: 8
+  # Memory: 32GB
   instance_type = "t3.2xlarge"
+  volume_size   = 128
 }
 
 # Create key pair
@@ -24,7 +27,7 @@ resource "aws_s3_object" "private_key" {
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Owner ID is Canonical
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"
@@ -71,7 +74,7 @@ resource "aws_instance" "data-pipeline-ec2" {
 
   root_block_device {
     delete_on_termination = true
-    volume_size           = 128
+    volume_size           = local.volume_size
     volume_type           = "gp3"
   }
 

@@ -1,3 +1,7 @@
+locals {
+  bucket_name = "${var.project_name}-${var.environment}-${formatdate("YYYYMMDD", timestamp())}"
+}
+
 resource "aws_s3_bucket" "project_files" {
   bucket = local.bucket_name
 
@@ -53,7 +57,7 @@ resource "aws_s3_object" "pyproject" {
 # Upload source code directory
 resource "aws_s3_object" "src_files" {
   depends_on = [aws_s3_bucket_public_access_block.project_files]
-  for_each   = fileset("${path.module}/../src", "**/*")
+  for_each   = fileset("${path.module}/../src", "**/*.{py,json,yaml,yml}")
 
   bucket = aws_s3_bucket.project_files.id
   key    = "src/${each.value}"
