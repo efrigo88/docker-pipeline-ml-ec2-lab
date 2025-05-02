@@ -1,11 +1,27 @@
 # Docker Pipeline ML EC2 Lab
 
-This project sets up a machine learning pipeline on AWS EC2 using Docker containers. It includes infrastructure as code (Terraform) to provision the necessary AWS resources and automated setup scripts.
+This project implements a machine learning pipeline for document processing and semantic search using AWS EC2 and Docker containers. It processes PDF documents, generates embeddings, and enables semantic search capabilities using ChromaDB and Ollama.
+
+## Features
+
+- PDF document processing and text extraction
+- Text chunking and embedding generation using Ollama
+- Vector storage and semantic search using ChromaDB
+- Data processing with Apache Spark and Delta Lake
+- S3 integration for data storage
+- Infrastructure as Code using Terraform
 
 ## Architecture
 
 - **Infrastructure**: AWS EC2 instance with Docker and Docker Compose
-- **Storage**: S3 bucket for file storage
+- **Storage**: 
+  - S3 bucket for file storage
+  - Delta Lake tables for processed data
+  - ChromaDB for vector storage
+- **Processing**: 
+  - Apache Spark for data processing
+  - Ollama for text embeddings
+  - ChromaDB for vector search
 - **Security**: IAM roles and security groups for secure access
 - **Containers**: Docker containers for the ML pipeline components
 
@@ -59,16 +75,36 @@ This project sets up a machine learning pipeline on AWS EC2 using Docker contain
 ├── scripts/            # Setup and utility scripts
 │   └── setup_ec2.sh    # EC2 instance setup script
 ├── src/                # Application source code
+│   ├── main.py        # Main application logic
+│   ├── helpers.py     # Helper functions
+│   └── queries.py     # Search queries
 ├── data/               # Data files
 ├── docker-compose.yml  # Docker Compose configuration
 └── Dockerfile         # Docker image definition
 ```
+
+## Pipeline Flow
+
+1. **Document Processing**:
+   - PDF documents are read from S3
+   - Text is extracted and split into chunks
+   - Each chunk is processed and embedded using Ollama
+
+2. **Data Storage**:
+   - Processed data is stored in Delta Lake tables
+   - Embeddings and metadata are stored in ChromaDB
+   - Results are saved in JSONL format
+
+3. **Search Capabilities**:
+   - Semantic search using ChromaDB
+   - Query results are saved to S3
 
 ## Monitoring and Logs
 
 - Setup logs: `/home/ubuntu/app/setup.log`
 - Docker container logs: `docker logs <container-name>`
 - Application logs: Check the respective container logs
+- Spark UI: Available through the EC2 instance's web interface
 
 ## Cleanup
 
@@ -83,3 +119,5 @@ terraform destroy
 - The EC2 instance may take a few minutes to fully initialize
 - All sensitive files (like SSH keys) are stored in S3
 - The setup script automatically installs Docker, Docker Compose, and other dependencies
+- The pipeline uses the Nomic Embed Text model through Ollama for generating embeddings
+- Data is deduplicated before being stored in ChromaDB
