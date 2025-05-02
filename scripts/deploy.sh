@@ -36,6 +36,11 @@ echo "🔑 Downloading SSH key..."
 aws s3 cp s3://${BUCKET_NAME}/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
 chmod 400 ./key.pem
 
+echo "To connect to the EC2 instance:"
+echo "   ssh -i key.pem ubuntu@${EC2_IP}"
+echo ""
+echo "Note: The EC2 instance may take a few minutes to fully initialize."
+
 # Build Docker image
 echo "📦 Building Docker image..."
 docker buildx build --platform linux/amd64 -t ${ECR_REPOSITORY}:${IMAGE_TAG} .
@@ -50,8 +55,3 @@ docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
 echo "✅ Deployment completed successfully!"
-echo ""
-echo "To connect to the EC2 instance:"
-echo "   ssh -i key.pem ubuntu@${EC2_IP}"
-echo ""
-echo "Note: The EC2 instance may take a few minutes to fully initialize."

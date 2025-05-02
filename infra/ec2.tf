@@ -1,8 +1,8 @@
 locals {
   # https://aws.amazon.com/ec2/instance-types/
-  # vCPUs: 8
-  # Memory: 32GB
-  instance_type = "t3.2xlarge"
+  # vCPUs: 4
+  # Memory: 16GB
+  instance_type = "t3.xlarge"
   volume_size   = 128
 }
 
@@ -90,8 +90,8 @@ resource "aws_instance" "data-pipeline-ec2" {
               sudo apt install awscli -y
               
               # Download and execute setup script using AWS CLI
-              aws s3 cp s3://${aws_s3_bucket.project_files.bucket}/scripts/setup_ec2.sh /home/ubuntu/app/setup_ec2.sh
-              chmod +x /home/ubuntu/app/setup_ec2.sh
+              aws s3 cp s3://${aws_s3_bucket.project_files.bucket}/scripts/setup_ec2.sh /home/ubuntu/app/scripts/setup_ec2.sh
+              chmod +x /home/ubuntu/app/scripts/setup_ec2.sh
               
               # Export variables for the setup script
               export AWS_ACCOUNT_ID="${var.aws_account_id}"
@@ -99,7 +99,7 @@ resource "aws_instance" "data-pipeline-ec2" {
               export ENVIRONMENT="${var.environment}"
               
               # Run setup script
-              /home/ubuntu/app/setup_ec2.sh
+              /home/ubuntu/app/scripts/setup_ec2.sh
               EOF
 
   tags = {

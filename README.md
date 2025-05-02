@@ -35,18 +35,40 @@ This project implements a machine learning pipeline for document processing and 
 
 1. Configure AWS credentials:
    ```bash
-   export AWS_ACCESS_KEY_ID="your_access_key"
-   export AWS_SECRET_ACCESS_KEY="your_secret_key"
-   export AWS_REGION="your_region"
-   export AWS_ACCOUNT_ID="your_account_id"
+   # Create a .env file from the example
+   cp .env.example .env
+   
+   # Edit the .env file with your AWS credentials
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=your_region
+   AWS_ACCOUNT_ID=your_account_id
    ```
+
+   The `.env` file should contain your AWS credentials in the following format:
+   ```bash
+   AWS_ACCESS_KEY_ID=your_access_key
+   AWS_SECRET_ACCESS_KEY=your_secret_key
+   AWS_REGION=your_region
+   AWS_ACCOUNT_ID=your_account_id
+   ```
+
+   Make sure to replace the placeholder values with your actual AWS credentials. Never commit the `.env` file to version control.
 
 2. Deploy the infrastructure:
    ```bash
-   cd infra
-   terraform init
-   terraform apply
+   # Make the scripts executable
+   chmod +x scripts/*.sh
+
+   # Deploy the infrastructure using the deploy script
+   ./scripts/deploy.sh
    ```
+
+   The deployment script will:
+   - Initialize Terraform
+   - Apply the infrastructure changes
+   - Set up the EC2 instance
+   - Configure Docker and required services
 
 3. After deployment, you can connect to the EC2 instance:
    ```bash
@@ -58,9 +80,25 @@ This project implements a machine learning pipeline for document processing and 
    ssh -i key.pem ubuntu@<ec2-public-ip>
    ```
 
-4. Check the setup logs:
+4. Once connected to the EC2 instance, navigate to the app directory and run the application:
+   ```bash
+   # Navigate to the app directory
+   cd /home/ubuntu/app
+
+   # The Docker Compose services should be running
+   # You can verify with:
+   docker ps
+
+   # Run the main application using the start script
+   ./scripts/start_process.sh
+   ```
+
+   Note: The application needs to be run manually after connecting to the EC2 instance. The Docker Compose services will be running in the background, but the main application process needs to be started explicitly.
+
+5. Check the setup logs:
    ```bash
    cat /home/ubuntu/app/setup.log
+   cat /home/ubuntu/app/process.log
    ```
 
 ## Project Structure
@@ -68,19 +106,28 @@ This project implements a machine learning pipeline for document processing and 
 ```
 .
 ├── infra/               # Terraform infrastructure code
+│   ├── provider.tf      # AWS provider configuration
+│   ├── variables.tf     # Input variables definition
 │   ├── ec2.tf          # EC2 instance configuration
 │   ├── iam.tf          # IAM roles and policies
 │   ├── s3.tf           # S3 bucket configuration
-│   └── vpc.tf          # VPC and networking setup
+│   ├── networking.tf   # VPC and networking setup
+│   └── ecr.tf          # ECR repository configuration
 ├── scripts/            # Setup and utility scripts
+│   ├── deploy.sh       # Infrastructure deployment script
+│   ├── destroy.sh      # Cleanup script
 │   └── setup_ec2.sh    # EC2 instance setup script
 ├── src/                # Application source code
 │   ├── main.py        # Main application logic
 │   ├── helpers.py     # Helper functions
 │   └── queries.py     # Search queries
-├── data/               # Data files
-├── docker-compose.yml  # Docker Compose configuration
-└── Dockerfile         # Docker image definition
+├── data/              # Data files and storage
+├── .env.example       # Example environment variables
+├── docker-compose.yml # Docker Compose configuration
+├── Dockerfile        # Docker image definition
+├── pyproject.toml    # Python project configuration
+├── .pre-commit-config.yaml # Pre-commit hooks
+└── .pylintrc         # Python linting configuration
 ```
 
 ## Pipeline Flow
@@ -110,9 +157,14 @@ This project implements a machine learning pipeline for document processing and 
 
 To destroy all resources:
 ```bash
-cd infra
-terraform destroy
+# Use the destroy script to clean up all resources
+./scripts/destroy.sh
 ```
+
+The destroy script will:
+- Remove all AWS resources created by Terraform
+- Clean up any temporary files
+- Remove SSH keys and other sensitive data
 
 ## Notes
 

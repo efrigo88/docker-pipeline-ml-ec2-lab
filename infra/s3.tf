@@ -38,6 +38,14 @@ resource "aws_s3_object" "setup_script" {
   etag       = filemd5("${path.module}/../scripts/setup_ec2.sh")
 }
 
+resource "aws_s3_object" "start_process_script" {
+  depends_on = [aws_s3_bucket_public_access_block.project_files]
+  bucket     = aws_s3_bucket.project_files.id
+  key        = "scripts/start_process.sh"
+  source     = "${path.module}/../scripts/start_process.sh"
+  etag       = filemd5("${path.module}/../scripts/start_process.sh")
+}
+
 resource "aws_s3_object" "dockerfile" {
   depends_on = [aws_s3_bucket_public_access_block.project_files]
   bucket     = aws_s3_bucket.project_files.id
