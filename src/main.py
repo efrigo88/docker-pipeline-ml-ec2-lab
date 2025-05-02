@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from typing import List, Dict, Any, Tuple
 
@@ -24,12 +23,19 @@ from .helpers import (
 
 from .queries import QUERIES
 
-# Update paths to use EFS mount point
-INPUT_PATH = "./data/input/sample2.pdf"
-OUTPUT_PATH = "/chromadb/delta_table"
-JSONL_PATH = "/chromadb/jsonl_file"
-ANSWERS_PATH = "/chromadb/answers.jsonl"
+# Paths
+ENV = "dev"
+BUCKET_NAME = (
+    f"s3://docker-pipeline-ml-ec2-lab-{ENV}-"
+    f"{datetime.now().strftime('%Y%m%d')}"
+)
+INPUT_PATH = f"{BUCKET_NAME}/data/input/sample2.pdf"
+OUTPUT_PATH = f"{BUCKET_NAME}/chromadb/delta_table"
+JSONL_PATH = f"{BUCKET_NAME}/chromadb/jsonl_file"
+ANSWERS_PATH = f"{BUCKET_NAME}/chromadb/answers.jsonl"
+
 CHUNK_SIZE = 100
+OLLAMA_HOST = "http://localhost:11434"
 
 
 def process_document() -> Tuple[
@@ -49,9 +55,7 @@ def process_document() -> Tuple[
     metadatas = get_metadata(chunks, doc, INPUT_PATH)
     print("✅ Chunks, IDs and Metadatas generated.")
 
-    model = OllamaEmbeddings(
-        model="nomic-embed-text", base_url=os.getenv("OLLAMA_HOST")
-    )
+    model = OllamaEmbeddings(model="nomic-embed-text", base_url=OLLAMA_HOST)
     embeddings = get_embeddings(chunks, model)
     print("✅ Embeddings generated.")
     return ids, chunks, metadatas, embeddings, model

@@ -38,7 +38,7 @@ chmod +x /usr/local/bin/docker-compose
 
 # Get the current bucket name
 log "🔍 Getting current bucket name..."
-BUCKET_NAME=$(aws s3 ls | grep "^docker-pipeline-ml-ec2-lab" | awk '{print $3}')
+BUCKET_NAME=$(aws s3 ls | grep "docker-pipeline-ml-ec2-lab" | awk '{print $3}')
 
 if [ -z "$BUCKET_NAME" ]; then
     log "❌ Could not find the S3 bucket"

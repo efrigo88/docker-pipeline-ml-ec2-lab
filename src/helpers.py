@@ -1,14 +1,26 @@
 import os
 import json
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import List, Dict, Any, BinaryIO
+
+import boto3
 import chromadb
+from botocore.exceptions import ClientError
 from pyspark.sql import SparkSession
 import pyspark.sql.types as T
 from chromadb.config import Settings
 from docling.datamodel.document import InputDocument
 from docling.document_converter import DocumentConverter
 from langchain_ollama import OllamaEmbeddings
+
+
+# Initialize S3 client
+s3_client = boto3.client("s3")
+
+# Spark configs
+THREADS = "local[8]"
+DRIVER_MEMORY = "16g"
+SHUFFLE_PARTITIONS = "8"
 
 # Define schema
 schema = T.StructType(
@@ -36,9 +48,9 @@ schema = T.StructType(
 # Create Spark session
 spark = (
     SparkSession.builder.appName("TestSpark")
-    .master(os.environ["THREADS"])
-    .config("spark.driver.memory", os.environ["DRIVER_MEMORY"])
-    .config("spark.sql.shuffle.partitions", os.environ["SHUFFLE_PARTITIONS"])
+    .master(THREADS)
+    .config("spark.driver.memory", DRIVER_MEMORY)
+    .config("spark.sql.shuffle.partitions", SHUFFLE_PARTITIONS)
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config(
         "spark.sql.catalog.spark_catalog",
@@ -47,6 +59,35 @@ spark = (
     .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.2.0")
     .getOrCreate()
 )
+
+
+def get_s3_bucket_and_key(s3_path: str) -> tuple[str, str]:
+    """Extract bucket name and key from S3 path."""
+    if not s3_path.startswith("s3://"):
+        raise ValueError("Path must be an S3 path starting with 's3://'")
+    path_without_prefix = s3_path[5:]  # Remove 's3://'
+    bucket_name = path_without_prefix.split("/")[0]
+    key = "/".join(path_without_prefix.split("/")[1:])
+    return bucket_name, key
+
+
+def read_from_s3(s3_path: str) -> BinaryIO:
+    """Read file from S3."""
+    bucket_name, key = get_s3_bucket_and_key(s3_path)
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=key)
+        return response["Body"]
+    except ClientError as e:
+        raise Exception(f"Error reading from S3: {str(e)}") from e
+
+
+def write_to_s3(file_path: str, s3_path: str) -> None:
+    """Write file to S3."""
+    bucket_name, key = get_s3_bucket_and_key(s3_path)
+    try:
+        s3_client.upload_file(file_path, bucket_name, key)
+    except ClientError as e:
+        raise Exception(f"Error writing to S3: {str(e)}") from e
 
 
 def get_client() -> chromadb.HttpClient:
@@ -78,7 +119,13 @@ def get_collection(client: chromadb.HttpClient) -> chromadb.Collection:
 def parse_pdf(source_path: str) -> InputDocument:
     """Parse the PDF document using DocumentConverter."""
     converter = DocumentConverter()
-    result = converter.convert(source_path)
+    if source_path.startswith("s3://"):
+        # Read from S3
+        s3_file = read_from_s3(source_path)
+        result = converter.convert(s3_file)
+    else:
+        # Read from local file
+        result = converter.convert(source_path)
     return result.document
 
 
@@ -175,7 +222,21 @@ def save_json_data(
         raise FileExistsError(
             f"File {file_path} already exists and overwrite=False"
         )
-    with open(file_path, "w", encoding="utf-8") as f:
+
+    # Create a temporary file
+    temp_file = f"/tmp/{os.path.basename(file_path)}"
+
+    # Write to temporary file
+    with open(temp_file, "w", encoding="utf-8") as f:
         for item in data:
             json.dump(item, f, ensure_ascii=False)
             f.write("\n")
+
+    # If it's an S3 path, upload the file
+    if file_path.startswith("s3://"):
+        write_to_s3(temp_file, file_path)
+        # Clean up temporary file
+        os.remove(temp_file)
+    else:
+        # Move the temporary file to the final location
+        os.rename(temp_file, file_path)

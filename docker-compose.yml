@@ -3,9 +3,6 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/data-pipeline:latest
     container_name: app
     environment:
-      - THREADS=${THREADS}
-      - DRIVER_MEMORY=${DRIVER_MEMORY}
-      - SHUFFLE_PARTITIONS=${SHUFFLE_PARTITIONS}
       - OLLAMA_HOST=ollama:11434
     volumes:
       - ./:/app/
