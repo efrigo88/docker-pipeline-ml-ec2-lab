@@ -26,6 +26,20 @@ aws ecr batch-delete-image \
     --image-ids imageTag=latest \
     --region ${AWS_REGION} || true  # Ignore errors if repository doesn't exist
 
+# Delete all files in S3 bucket
+echo "🧹 Deleting all files in S3 bucket..."
+BUCKET_NAME=$(aws s3 ls | grep "docker-pipeline-ml-ec2-lab" | awk '{print $3}')
+if [ -z "$BUCKET_NAME" ]; then
+    echo "⚠️ No matching S3 bucket found, skipping bucket cleanup"
+else
+    echo "Found bucket: ${BUCKET_NAME}"
+    aws s3 rm "s3://${BUCKET_NAME}" --recursive || {
+        echo "❌ Failed to delete contents of bucket ${BUCKET_NAME}"
+        exit 1
+    }
+    echo "✅ Successfully deleted all files from bucket ${BUCKET_NAME}"
+fi
+
 # Change to infra directory
 cd infra
 
