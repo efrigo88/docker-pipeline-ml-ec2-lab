@@ -51,5 +51,9 @@ find . -type f \( \
 # Change back to root directory
 cd ..
 
+# Delete key.pem
+echo "🧹 Deleting key.pem..."
+rm -rf key.pem
+
 echo "✅ Cleanup completed successfully!"
 echo "All AWS resources and local Terraform state files have been destroyed."
