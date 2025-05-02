@@ -11,14 +11,16 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
-# Fetch secrets from AWS Secrets Manager
-log "🔑 Fetching AWS secrets..."
-AWS_ACCOUNT_ID=$(aws secretsmanager get-secret-value --secret-id aws-account-id --query SecretString --output text)
-AWS_REGION=$(aws secretsmanager get-secret-value --secret-id aws-region --query SecretString --output text)
+# Set AWS Region
+AWS_REGION="eu-west-1"
 
-# Check if secrets were retrieved successfully
-if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ]; then
-    log "❌ Failed to retrieve AWS secrets from Secrets Manager"
+# Fetch AWS Account ID from Secrets Manager
+log "🔑 Fetching AWS Account ID from Secrets Manager..."
+AWS_ACCOUNT_ID=$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id aws-account-id --query SecretString --output text)
+
+# Check if account ID was retrieved successfully
+if [ -z "$AWS_ACCOUNT_ID" ]; then
+    log "❌ Failed to retrieve AWS Account ID from Secrets Manager"
     exit 1
 fi
 

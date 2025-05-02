@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ec2_role" {
-  name = "ec2-role"
+  name = "docker-pipeline-ml-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -77,7 +77,37 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_policy" {
   policy_arn = aws_iam_policy.s3_access_policy.arn
 }
 
+resource "aws_iam_role_policy" "ec2_policy" {
+  name = "docker-pipeline-ml-ec2-policy"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject",
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          "arn:aws:s3:::docker-pipeline-ml-ec2-lab-*",
+          "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/*",
+          "arn:aws:secretsmanager:${var.aws_region}:${var.aws_account_id}:secret:aws-account-id-*",
+          "arn:aws:secretsmanager:${var.aws_region}:${var.aws_account_id}:secret:aws-region-*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "ec2-profile"
+  name = "docker-pipeline-ml-ec2-profile"
   role = aws_iam_role.ec2_role.name
 }
