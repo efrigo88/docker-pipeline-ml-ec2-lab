@@ -2,15 +2,6 @@
 
 This project implements a machine learning pipeline for document processing and semantic search using AWS EC2 and Docker containers. It processes PDF documents, generates embeddings, and enables semantic search capabilities using ChromaDB and Ollama.
 
-## Features
-
-- PDF document processing and text extraction
-- Text chunking and embedding generation using Ollama
-- Vector storage and semantic search using ChromaDB
-- Data processing with Apache Spark and Delta Lake
-- S3 integration for data storage
-- Infrastructure as Code using Terraform
-
 ## Architecture
 
 - **Infrastructure**: AWS EC2 instance with Docker and Docker Compose
@@ -68,11 +59,9 @@ This project implements a machine learning pipeline for document processing and 
 
 3. After deployment, you can connect to the EC2 instance:
    ```bash
-   # Download the private key from S3
-   aws s3 cp s3://<bucket-name>/ssh/docker-pipeline-ml-ec2-lab-key.pem ./key.pem
-   chmod 400 key.pem
-
-   # Connect to the instance
+   # The private key (key.pem) will be automatically downloaded to the root of this repository
+   # You can find the EC2 instance's public IP in the Terraform output after deployment
+   # Then simply run:
    ssh -i key.pem ubuntu@<ec2-public-ip>
    ```
 
@@ -101,29 +90,33 @@ This project implements a machine learning pipeline for document processing and 
 
 ```
 .
-├── infra/               # Terraform infrastructure code
-│   ├── provider.tf      # AWS provider configuration
-│   ├── variables.tf     # Input variables definition
-│   ├── ec2.tf          # EC2 instance configuration
-│   ├── iam.tf          # IAM roles and policies
-│   ├── s3.tf           # S3 bucket configuration
-│   ├── networking.tf   # VPC and networking setup
-│   └── ecr.tf          # ECR repository configuration
-├── scripts/            # Setup and utility scripts
-│   ├── deploy.sh       # Infrastructure deployment script
-│   ├── destroy.sh      # Cleanup script
-│   └── setup_ec2.sh    # EC2 instance setup script
-├── src/                # Application source code
-│   ├── main.py        # Main application logic
-│   ├── helpers.py     # Helper functions
-│   └── queries.py     # Search queries
-├── data/              # Data files and storage
-├── .env.example       # Example environment variables
-├── docker-compose.yml # Docker Compose configuration
-├── Dockerfile        # Docker image definition
-├── pyproject.toml    # Python project configuration
+├── infra/                    # Terraform infrastructure code
+│   ├── provider.tf           # AWS provider configuration
+│   ├── variables.tf          # Input variables definition
+│   ├── ec2.tf               # EC2 instance configuration
+│   ├── iam.tf               # IAM roles and policies
+│   ├── s3.tf                # S3 bucket configuration
+│   ├── networking.tf        # VPC and networking setup
+│   ├── ecr.tf               # ECR repository configuration
+│   └── secrets.tf           # AWS Secrets Manager configuration
+├── scripts/                 # Setup and utility scripts
+│   ├── deploy.sh            # Infrastructure deployment script
+│   ├── destroy.sh           # Cleanup script
+│   ├── setup_ec2.sh         # EC2 instance setup script
+│   └── start_process.sh     # Application startup script
+├── src/                     # Application source code
+│   ├── main.py             # Main application logic
+│   ├── helpers.py          # Helper functions
+│   └── queries.py          # Search queries
+├── data/                    # Data files and storage
+├── .env.example            # Example environment variables
+├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile              # Docker image definition
+├── pyproject.toml          # Python project configuration
 ├── .pre-commit-config.yaml # Pre-commit hooks
-└── .pylintrc         # Python linting configuration
+├── .pylintrc              # Python linting configuration
+├── .gitignore             # Git ignore rules
+└── LICENSE                # Project license
 ```
 
 ## Pipeline Flow
