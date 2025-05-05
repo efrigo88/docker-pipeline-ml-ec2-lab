@@ -30,12 +30,13 @@ BUCKET_NAME = (
     f"{datetime.now().strftime('%Y%m%d')}"
 )
 SPARK_BUCKET_NAME = BUCKET_NAME.replace("s3://", "s3a://")
-INPUT_PATH = f"{BUCKET_NAME}/data/input/sample2.pdf"
+INPUT_PATH = f"{BUCKET_NAME}/data/input/Example_DCL.pdf"
 OUTPUT_PATH = f"{SPARK_BUCKET_NAME}/data/output/delta_table"
 JSONL_PATH = f"{SPARK_BUCKET_NAME}/data/output/jsonl_file"
 ANSWERS_PATH = f"{SPARK_BUCKET_NAME}/data/answers/answers.jsonl"
 
-CHUNK_SIZE = 100
+CHUNK_SIZE = 750
+CHUNK_OVERLAP = 100
 OLLAMA_HOST = "http://ollama:11434"
 
 
@@ -51,7 +52,7 @@ def process_document() -> Tuple[
     text_content = get_text_content(doc)
     print("✅ Text content generated.")
 
-    chunks = get_chunks(text_content, CHUNK_SIZE)
+    chunks = get_chunks(text_content, CHUNK_SIZE, CHUNK_OVERLAP)
     ids = get_ids(chunks, INPUT_PATH)
     metadatas = get_metadata(chunks, doc, INPUT_PATH)
     print("✅ Chunks, IDs and Metadatas generated.")

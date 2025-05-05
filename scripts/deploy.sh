@@ -17,7 +17,7 @@ terraform init
 terraform apply -auto-approve
 
 # Configuration
-AWS_REGION=${AWS_DEFAULT_REGION:-"us-east-1"}  # Default to us-east-1 if not set
+AWS_REGION="eu-west-1"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_REPOSITORY="data-pipeline"
 IMAGE_TAG="latest"

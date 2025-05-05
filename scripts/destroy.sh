@@ -13,7 +13,7 @@ else
 fi
 
 # Configuration
-AWS_REGION=${AWS_DEFAULT_REGION:-$(aws configure get region)}
+AWS_REGION="eu-west-1"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_REPOSITORY="data-pipeline"
 

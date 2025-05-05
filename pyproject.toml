@@ -10,6 +10,7 @@ dependencies = [
     "docling==2.30.0",
     "pyspark==3.5.1",
     "boto3==1.38.7",
+    "langchain==0.3.25",
 ]
 requires-python = ">=3.10"
 

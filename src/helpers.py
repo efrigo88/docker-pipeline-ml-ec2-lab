@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import List, Dict, Any, BinaryIO
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 import boto3
 import chromadb
@@ -165,14 +166,18 @@ def get_text_content(doc: InputDocument) -> List[str]:
     ]
 
 
-def get_chunks(text_content: List[str], chunk_size: int) -> List[str]:
-    """Split text content into chunks of specified size."""
+def get_chunks(
+    text_content: List[str], chunk_size: int = 750, chunk_overlap: int = 100
+) -> List[str]:
+    """Split text content into semantically meaningful chunks."""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["\n\n", "\n", ".", "!", "?", " ", ""],
+    )
     chunks = []
     for text in text_content:
-        for i in range(0, len(text), chunk_size):
-            chunk = text[i : i + chunk_size].strip()
-            if chunk:
-                chunks.append(chunk)
+        chunks.extend(splitter.split_text(text))
     if not chunks:
         raise ValueError("No text chunks found in the document.")
     return chunks
